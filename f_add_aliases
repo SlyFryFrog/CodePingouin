@@ -1,0 +1,54 @@
+#!/bin/bash
+
+# File to update aliases
+ALIASES_FILE="$HOME/.bash_aliases"
+ALIASES_BAK_FILE="${ALIASES_FILE}.bak"
+
+# Directory containing the executables
+BIN_DIR="$HOME/bin"
+
+# Check if the bin directory exists
+if [ ! -d "$BIN_DIR" ]; then
+    echo "Directory $BIN_DIR does not exist."
+    exit 1
+fi
+
+# Backup existing .bash_aliases if it exists
+if [ -f "$ALIASES_FILE" ]; then
+    cp "$ALIASES_FILE" "$ALIASES_BAK_FILE"
+    echo "Backup of existing .bash_aliases created at $ALIASES_BAK_FILE"
+fi
+
+# Prepare a temporary file to store combined aliases
+TEMP_ALIASES_FILE=$(mktemp)
+
+# Add existing aliases to the temporary file, if backup exists
+if [ -f "$ALIASES_BAK_FILE" ]; then
+    cat "$ALIASES_BAK_FILE" > "$TEMP_ALIASES_FILE"
+fi
+
+# Add new aliases to the temporary file
+echo "# Automatically generated aliases from $BIN_DIR" >> "$TEMP_ALIASES_FILE"
+for file in "$BIN_DIR"/*; do
+    if [ -x "$file" ] && [ -f "$file" ]; then
+        filename=$(basename "$file")
+        echo "alias $filename='$file'" >> "$TEMP_ALIASES_FILE"
+    fi
+done
+
+# Remove duplicates and save to the .bash_aliases file
+awk '!seen[$0]++' "$TEMP_ALIASES_FILE" > "$ALIASES_FILE"
+
+# Remove the temporary file
+rm "$TEMP_ALIASES_FILE"
+
+# Source the updated .bash_aliases
+if [ -f "$ALIASES_FILE" ]; then
+    . "$ALIASES_FILE"
+    echo "Aliases updated and sourced from $ALIASES_FILE"
+else
+    echo "Failed to create or update $ALIASES_FILE"
+    exit 1
+fi
+
+echo "All executable files in $BIN_DIR have been added to $ALIASES_FILE as aliases."

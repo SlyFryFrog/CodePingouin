@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Check if script is run with sudo
+if [ "$EUID" -ne 0 ]; then
+    echo "This script requires superuser privileges. Please run with sudo."
+    exit 1
+fi
+
 function printHelp() {
     echo "Usage: $0 [-h] [-d directory]"
     echo
@@ -68,7 +74,7 @@ if [ ! -d "$LOG_DIR" ]; then
     echo "Directory $LOG_DIR does not exist. Making directory..."
     
     # Create archive directory if it doesn't exist
-    mkdir -p $ARCHIVE_DIR
+    sudo mkdir -p $ARCHIVE_DIR
 fi
 
 compress
