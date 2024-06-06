@@ -1,0 +1,74 @@
+#!/bin/bash
+
+function printHelp() {
+    echo "Usage: $0 [-h] [-d directory]"
+    echo
+    echo "Options:"
+    echo "  -h            Display this help message"
+    echo "  -d directory  Specify the directory to use within /var/log"
+}
+
+function compress() {
+    # Rotate and compress logs
+    for log_file in $LOG_DIR/*.log; do
+        if [ -f "$log_file" ]; then
+            # Get the base name of the log file
+            base_name=$(basename "$log_file" .log)
+            
+            # Create a timestamp
+            timestamp=$(date +"%Y%m%d%H%M%S")
+            
+            # Compress the log file
+            tar -czf "$ARCHIVE_DIR/${base_name}_${timestamp}.tar.gz" "$log_file"
+            
+            # Clear the log file
+            : > "$log_file"
+        fi
+    done
+
+    # Remove old archives older than 30 days
+    find $ARCHIVE_DIR -type f -mtime +30 -name "*.tar.gz" -exec rm -f {} \;
+}
+
+# Default values
+dir=""
+
+while getopts ":h:d::" opt; do
+	case $opt in
+		h) # Help arg
+			printHelp
+			exit 0
+			;;
+		d)
+			dir=$OPTARG
+			;;
+		:) # Case for mismatched arg
+            echo "Option -$OPTARG requires an argument." >&2
+            printHelp
+            exit 1
+            ;;
+		\?) # Case for invalid arg
+			printHelp
+			exit 1
+			;;
+	esac
+done
+
+# Ensure dir is set
+if [ -z "$dir" ]; then
+    echo "Directory not specified. Use the -d option to specify the directory."
+    printHelp
+    exit 1
+fi
+
+LOG_DIR="/var/log/$dir"
+ARCHIVE_DIR="$LOG_DIR/archive"
+
+if [ ! -d "$LOG_DIR" ]; then
+    echo "Directory $LOG_DIR does not exist. Making directory..."
+    
+    # Create archive directory if it doesn't exist
+    mkdir -p $ARCHIVE_DIR
+fi
+
+compress

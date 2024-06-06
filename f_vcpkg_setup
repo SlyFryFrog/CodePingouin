@@ -9,6 +9,7 @@ fi
 ARCH=$(uname -m)
 if [[ $ARCH == "aarch64" ]]; then
     OS_ARCH="arm64"
+    sudo apt-get install ninja-build
 elif [[ $ARCH == "x86_64" ]]; then
     OS_ARCH="x64"
 else
@@ -22,8 +23,6 @@ cd ~
 git clone https://github.com/microsoft/vcpkg.git .vcpkg
 
 cd .vcpkg
-
-sudo apt-get install ninja-build
 
 # Bootstrap Vcpkg
 ./bootstrap-vcpkg.sh
