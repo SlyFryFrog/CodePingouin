@@ -1,0 +1,46 @@
+#!/bin/bash
+
+if [ -d ~/.vcpkg/ ]; then
+	echo "vcpkg is already setup at ~/.vcpkg/";
+	exit
+fi
+
+# Determine the operating system type
+ARCH=$(uname -m)
+if [[ $ARCH == "aarch64" ]]; then
+    OS_ARCH="arm64"
+elif [[ $ARCH == "x86_64" ]]; then
+    OS_ARCH="x64"
+else
+    echo "Unsupported architecture: $ARCH"
+    exit 1
+fi
+
+cd ~
+
+# Clone Vcpkg repository
+git clone https://github.com/microsoft/vcpkg.git .vcpkg
+
+cd .vcpkg
+
+sudo apt-get install ninja-build
+
+# Bootstrap Vcpkg
+./bootstrap-vcpkg.sh
+
+# Determine the operating system type
+if [[ $ARCH == "aarch64" || $ARCH == "s390x" || $ARCH == "ppc64le" || $ARCH == "riscv" ]]; then
+    export VCPKG_FORCE_SYSTEM_BINARIES=true
+fi
+
+
+cd ~
+if [ ! -f ~/.bash_aliases ]; then
+	touch ".bash_aliases"
+fi
+
+echo "alias vcpkg='~/.vcpkg/vcpkg'" >> ~/.bash_aliases
+
+# Restart Bash
+echo "Restarting Bash..."
+exec bash
