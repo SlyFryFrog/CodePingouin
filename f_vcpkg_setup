@@ -1,69 +1,68 @@
 #!/bin/bash
 
 function printHelp() {
-    echo "Usage: $0 [-h] [-d] [-s] [-i]"
-    echo "  -h    Display help"
-    echo "  -d    Remove the ~/.vcpkg directory"
-    echo "  -s    Set up vcpkg"
-    echo
-    echo "Sudo-specific flags"
-    echo "  -i    Installs all dependencies using apt. Must be run as sudo."
+	echo "Usage: $0 [-h] [-d] [-s] [-i]"
+	echo "  -h    Display help"
+	echo "  -d    Remove the ~/.vcpkg directory"
+	echo "  -s    Set up vcpkg"
+	echo
+	echo "Sudo-specific flags"
+	echo "  -i    Installs all dependencies using apt. Must be run as sudo."
 }
 
 function installDependencies() {
-  if [ ! "$(id -u)" -eq 0 ]; then
-    echo "This flag requires that the script be run as root."
-    echo
-    printHelp
-    exit 0
-  fi
+	if [ ! "$(id -u)" -eq 0 ]; then
+		echo "This flag requires that the script be run as root."
+		echo
+		printHelp
+		exit 0
+	fi
 
-  sudo apt-get install curl zip unzip tar
+	sudo apt-get install curl zip unzip tar
 }
 
 function setup() {
+	if [ -d "${HOME}"/.vcpkg ]; then
+		read -r -p "${HOME}/.vcpkg already exists, do you want to overwrite this installation? (y/n): " USR_INPUT
+		if [[ "$USR_INPUT" != "y" && "$USR_INPUT" != "Y" ]]; then
+		echo "Action stopped, exiting..."
+		exit 0
+		else
+		rm -rf "${HOME}/".vcpkg
+		fi
+	fi
 
-  if [ -d "${HOME}"/.vcpkg ]; then
-    read -r -p "${HOME}/.vcpkg already exists, do you want to overwrite this installation? (y/n): " USR_INPUT
-    if [[ "$USR_INPUT" != "y" && "$USR_INPUT" != "Y" ]]; then
-      echo "Action stopped, exiting..."
-      exit 0
-    else
-      rm -rf "${HOME}/".vcpkg
-    fi
-  fi
+	# Determine the operating system type
+	ARCH=$(uname -m)
+	if [[ $ARCH == "aarch64" ]]; then
+		sudo apt-get install ninja-build
+	fi
 
-  # Determine the operating system type
-  ARCH=$(uname -m)
-  if [[ $ARCH == "aarch64" ]]; then
-      sudo apt-get install ninja-build
-  fi
+	cd ~ || exit 1
 
-  cd ~ || exit 1
+	# Clone Vcpkg repository
+	git clone https://github.com/microsoft/vcpkg.git .vcpkg
 
-  # Clone Vcpkg repository
-  git clone https://github.com/microsoft/vcpkg.git .vcpkg
+	cd .vcpkg || exit 1
 
-  cd .vcpkg || exit 1
+	# Bootstrap Vcpkg
+	./bootstrap-vcpkg.sh
 
-  # Bootstrap Vcpkg
-  ./bootstrap-vcpkg.sh
+	# Determine the operating system type
+	if [[ $ARCH == "aarch64" || $ARCH == "s390x" || $ARCH == "ppc64le" || $ARCH == "riscv" ]]; then
+		export VCPKG_FORCE_SYSTEM_BINARIES=true
+	fi
 
-  # Determine the operating system type
-  if [[ $ARCH == "aarch64" || $ARCH == "s390x" || $ARCH == "ppc64le" || $ARCH == "riscv" ]]; then
-      export VCPKG_FORCE_SYSTEM_BINARIES=true
-  fi
+	cd ~ || exit 1
+	if [ ! -f ~/.bash_aliases ]; then
+		touch ".bash_aliases"
+	fi
 
-  cd ~ || exit 1
-  if [ ! -f ~/.bash_aliases ]; then
-    touch ".bash_aliases"
-  fi
+	echo "alias vcpkg='~/.vcpkg/vcpkg'" >> ~/.bash_aliases
 
-  echo "alias vcpkg='~/.vcpkg/vcpkg'" >> ~/.bash_aliases
-
-  # Restart Bash
-  echo "Restarting Bash..."
-  exec bash
+	# Restart Bash
+	echo "Restarting Bash..."
+	exec bash
 }
 
 while getopts ":hdsi" opt; do
@@ -72,34 +71,34 @@ while getopts ":hdsi" opt; do
 			printHelp
 			exit 0
 			;;
-	  i)
-	    installDependencies
-	    exit 0
-	    ;;
+	  	i)
+			installDependencies
+			exit 0
+			;;
 		d) # Removes the dir
 			if [ -d "${HOME}"/.vcpkg ]; then
-        read -r -p "This will recursively remove the folder '${HOME}/.vcpkg', are you sure you want to continue (y/n): " USR_INPUT
-			  if [[ "$USR_INPUT" == "y" || "$USR_INPUT" == "Y" ]]; then
-			    rm -rf "${HOME}"/.vcpkg
-			  else
-			    echo "Action stopped, exiting..." 0
-			  fi
+        		read -r -p "This will recursively remove the folder '${HOME}/.vcpkg', are you sure you want to continue (y/n): " USR_INPUT
+				if [[ "$USR_INPUT" == "y" || "$USR_INPUT" == "Y" ]]; then
+					rm -rf "${HOME}"/.vcpkg
+				else
+					echo "Action stopped, exiting..." 0
+				fi
 			else
-			  echo "${HOME}/.vcpkg does not exist, exiting..." 0
+				echo "${HOME}/.vcpkg does not exist, exiting..." 0
 			fi
 			;;
-	  s) # Sets up vcpkg
-	    setup
-	    exit 0
-	    ;;
+	  	s) # Sets up vcpkg
+			setup
+			exit 0
+			;;
 		:) # Case for mismatched arg
-      echo "Option -$OPTARG requires an argument." >&2
-      printHelp
-      exit 1
-      ;;
+			echo "Option -$OPTARG requires an argument." >&2
+			printHelp
+			exit 1
+			;;
 		\?) # Case for invalid arg
-      printHelp
-      exit 1
-      ;;
+			printHelp
+			exit 1
+			;;
 	esac
 done
