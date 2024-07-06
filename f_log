@@ -16,7 +16,7 @@ function printHelp() {
 
 function compress() {
     # Rotate and compress logs
-    for log_file in $LOG_DIR/*.log; do
+    for log_file in "$LOG_DIR"/*.log; do
         if [ -f "$log_file" ]; then
             # Get the base name of the log file
             base_name=$(basename "$log_file" .log)
@@ -33,7 +33,7 @@ function compress() {
     done
 
     # Remove old archives older than 30 days
-    find $ARCHIVE_DIR -type f -mtime +30 -name "*.tar.gz" -exec rm -f {} \;
+    find "$ARCHIVE_DIR" -type f -mtime +30 -name "*.tar.gz" -exec rm -f {} \;
 }
 
 # Default values
@@ -74,7 +74,7 @@ if [ ! -d "$LOG_DIR" ]; then
     echo "Directory $LOG_DIR does not exist. Making directory..."
     
     # Create archive directory if it doesn't exist
-    sudo mkdir -p $ARCHIVE_DIR
+    sudo mkdir -p "$ARCHIVE_DIR"
 fi
 
 compress
