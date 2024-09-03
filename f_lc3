@@ -53,20 +53,21 @@ done
 
 # Check if the -r flag was set and run the simulator
 if $run_simulator; then
-    if [[ -n "$run_file" ]]; then
-        # Validate if the provided file is an .obj file
-        if [[ "${run_file##*.}" != "obj" ]]; then
-            echo "Error: The file provided with -r must be an '.obj' file." >&2
-            printHelp
-            exit 1
-        fi
-        lc3sim "$run_file"
-    elif [[ -n "$asm_file" ]]; then
-        # Run the simulator with the .obj file derived from the compiled .asm file
-        lc3sim "${asm_file%%.*}.obj"
-    else
-        echo "Error: No .asm file was provided to compile and run." >&2
-        printHelp
-        exit 1
-    fi
+    	if [[ -n "$run_file" ]]; then
+        	# Validate if the provided file is an .obj file
+        	if [[ "${run_file##*.}" != "obj" ]]; then
+            	echo "Error: The file provided with -r must be an '.obj' file." >&2
+            	printHelp
+            	exit 1
+        	fi
+
+        	lc3sim "$run_file"
+    	elif [[ -n "$asm_file" ]]; then
+        	# Run the simulator with the .obj file derived from the compiled .asm file
+        	lc3sim "${asm_file%%.*}.obj"
+    	else
+        	echo "Error: No .asm file was provided to compile and run." >&2
+        	printHelp
+        	exit 1
+    	fi
 fi
