@@ -1,0 +1,44 @@
+#!/bin/bash
+
+function printHelp() {
+        echo "Usage: $0 [-h] [-i file] [-r file]"
+	echo
+	echo "Options: "
+	echo "	-h Prints the help message."
+	echo "	-i Inserts the file following the flag into the kernel."
+	echo "	-r Removes the file following the flag from the kernel."
+}
+
+
+if [[ ! "$(id -u)" -eq 0 ]]; then
+	echo "This flag requires that the script be run as root."
+	echo
+	printHelp
+	exit 0
+fi
+
+
+while getopts ":hi::r::" opt; do
+	case $opt in
+		h) # Prints help message
+			exit 0
+			;;
+		i) # Inserts kernel module
+			sudo insmod "${OPTARG}"
+			exit 0
+			;;
+		r) # Removes kernel module
+			sudo rmmod "${OPTARG}"
+			exit 0
+			;;
+		:) # Case for mismatched arg
+			echo "Option -${OPTARG} requires an argument." >&2
+			printHelp
+			exit 1
+			;;
+		\?) # Case for invalid arg
+			printHelp
+			exit 1
+			;;
+	esac
+done

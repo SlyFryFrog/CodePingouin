@@ -1,0 +1,72 @@
+#!/bin/bash
+
+function printHelp() {
+    echo "Usage: $0 [-h] [-c file] [-r [file]]"
+    echo
+    echo "Options: "
+    echo "  -h Prints the help message."
+    echo "  -c Assembles '.asm' code into '.obj' for the lc3 simulator."
+    echo "  -r Runs the simulator after assembling the '.asm' code into '.obj'. If a file is provided, it must be an '.obj' file."
+}
+
+# Initialize variables
+asm_file=""
+run_file=""
+run_simulator=false
+
+while getopts ":hc:r::" opt; do
+    	case $opt in
+        	h) # Prints help message
+            		printHelp
+            		exit 0
+            		;;
+        	c) # Compiles the .asm file into .obj for the sim
+                	# Validate if the provided file is an .obj file
+        		if [[ "${OPTARG##*.}" != "asm" ]]; then
+            			echo "Error: The file provided with -c must be an '.asm' file." >&2
+            			printHelp
+            			exit 1
+			fi
+
+			lc3as "${OPTARG}"
+            		asm_file="${OPTARG}"
+            		;;
+        	r) # Optionally runs the simulator
+            		run_simulator=true
+            		run_file="${OPTARG}"
+            		;;
+        	:) # Case for missing argument
+            		if [[ $OPTARG == "r" ]]; then
+                		run_simulator=true
+            		else
+                		echo "Option -${OPTARG} requires an argument." >&2
+                		printHelp
+                		exit 1
+            		fi
+            		;;
+        	\?) # Case for invalid option
+            		printHelp
+            		exit 1
+            		;;
+    	esac
+done
+
+# Check if the -r flag was set and run the simulator
+if $run_simulator; then
+    if [[ -n "$run_file" ]]; then
+        # Validate if the provided file is an .obj file
+        if [[ "${run_file##*.}" != "obj" ]]; then
+            echo "Error: The file provided with -r must be an '.obj' file." >&2
+            printHelp
+            exit 1
+        fi
+        lc3sim "$run_file"
+    elif [[ -n "$asm_file" ]]; then
+        # Run the simulator with the .obj file derived from the compiled .asm file
+        lc3sim "${asm_file%%.*}.obj"
+    else
+        echo "Error: No .asm file was provided to compile and run." >&2
+        printHelp
+        exit 1
+    fi
+fi
