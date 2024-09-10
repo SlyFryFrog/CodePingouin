@@ -1,73 +1,93 @@
 #!/bin/bash
 
 function printHelp() {
-    echo "Usage: $0 [-h] [-c file] [-r [file]]"
-    echo
-    echo "Options: "
-    echo "  -h Prints the help message."
-    echo "  -c Assembles '.asm' code into '.obj' for the lc3 simulator."
-    echo "  -r Runs the simulator after assembling the '.asm' code into '.obj'. If a file is provided, it must be an '.obj' file."
+    	echo "Usage: $0 [-h | --help] [-c | --compile file] [-r | --run [file]] [--clean [-r]]"
+    	echo
+   	echo "Options: "
+    	echo "  -h and --help"
+	echo "Prints the help message."
+    	echo "  -c [file] and --compile [file]"
+	echo "Assembles '.asm' code into '.obj' for the lc3 simulator."
+    	echo "  -r [file] and --run [file]"
+	echo "Runs the simulator after assembling the '.asm' code into '.obj'."
+    	echo
+	echo "  --clean       	Removes '.obj' files from the current directory."
+    	echo "  --clean -r    	Recursively removes '.obj' files from the current directory and its subdirectories."
 }
 
 # Initialize variables
 asm_file=""
 run_file=""
 run_simulator=false
+clean=false
+clean_recursive=false
 
-while getopts ":hc:r::" opt; do
-    	case $opt in
-        	h) # Prints help message
-            		printHelp
-            		exit 0
-            		;;
-        	c) # Compiles the .asm file into .obj for the sim
-                	# Validate if the provided file is an .obj file
-        		if [[ "${OPTARG##*.}" != "asm" ]]; then
-            			echo "Error: The file provided with -c must be an '.asm' file." >&2
-            			printHelp
-            			exit 1
-			fi
-
-			lc3as "${OPTARG}"
-            		asm_file="${OPTARG}"
-            		;;
-        	r) # Optionally runs the simulator
-            		run_simulator=true
-            		run_file="${OPTARG}"
-            		;;
-        	:) # Case for missing argument
-            		if [[ $OPTARG == "r" ]]; then
-                		run_simulator=true
-            		else
-                		echo "Option -${OPTARG} requires an argument." >&2
-                		printHelp
-                		exit 1
-            		fi
-            		;;
-        	\?) # Case for invalid option
-            		printHelp
-            		exit 1
-            		;;
-    	esac
+# Parse options
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        -h | --help)
+            printHelp
+            exit 0
+            ;;
+	-c | --compile)
+            shift
+            if [[ "${1##*.}" != "asm" ]]; then
+                echo "Error: The file provided with -c must be an '.asm' file." >&2
+                printHelp
+                exit 1
+            fi
+            lc3as "$1"
+            asm_file="$1"
+            ;;
+	-r | --run)
+            run_simulator=true
+            run_file="$2"
+            shift
+            ;;
+        --clean)
+            clean=true
+            if [[ "$2" == "-r" ]]; then
+                clean_recursive=true
+                shift
+            fi
+            ;;
+        *)
+            echo "Unknown option: $1" >&2
+            printHelp
+            exit 1
+            ;;
+    esac
+    shift
 done
+
+# Handle --clean option
+if $clean; then
+    if $clean_recursive; then
+        find . -name "*.obj" -type f -delete
+	find . -name "*.sym" -type f -delete
+        echo "Recursively removed all '.obj' and '.sym' files from the current directory and its subdirectories."
+    else
+        find . -maxdepth 1 -name "*.obj" -type f -delete
+	find . -maxdepth 1 -name "*.sym" -type f -delete
+        echo "Removed all '.obj' and '.sym' files from the current directory."
+    fi
+    exit 0
+fi
 
 # Check if the -r flag was set and run the simulator
 if $run_simulator; then
-    	if [[ -n "$run_file" ]]; then
-        	# Validate if the provided file is an .obj file
-        	if [[ "${run_file##*.}" != "obj" ]]; then
-            	echo "Error: The file provided with -r must be an '.obj' file." >&2
-            	printHelp
-            	exit 1
-        	fi
-
-        	lc3sim "$run_file"
-    	elif [[ -n "$asm_file" ]]; then
-        	# Run the simulator with the .obj file derived from the compiled .asm file
-        	lc3sim "${asm_file%%.*}.obj"
-    	else
-        	echo "Error: No .asm file was provided to compile and run." >&2
-        	printHelp
-        	exit 1
-    	fi
+    if [[ -n "$run_file" ]]; then
+        if [[ "${run_file##*.}" != "obj" ]]; then
+            echo "Error: The file provided with -r must be an '.obj' file." >&2
+            printHelp
+            exit 1
+        fi
+        lc3sim "$run_file"
+    elif [[ -n "$asm_file" ]]; then
+        lc3sim "${asm_file%%.*}.obj"
+    else
+        echo "Error: No .asm file was provided to compile and run." >&2
+        printHelp
+        exit 1
+    fi
 fi
