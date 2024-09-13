@@ -1,18 +1,18 @@
 #!/bin/bash
 
 function printHelp() {
-    	echo "Usage: $0 [-h | --help] [-c | --compile file] [-r | --run [file]] [--clean [-r]]"
-    	echo
+    echo "Usage: $0 [-h | --help] [-c | --compile file] [-r | --run [file]] [--clean [-r]]"
+    echo
    	echo "Options: "
-    	echo "  -h and --help"
+   	echo "  -h and --help"
 	echo "Prints the help message."
-    	echo "  -c [file] and --compile [file]"
+   	echo "  -c [file] and --compile [file]"
 	echo "Assembles '.asm' code into '.obj' for the lc3 simulator."
-    	echo "  -r [file] and --run [file]"
+   	echo "  -r [file] and --run [file]"
 	echo "Runs the simulator after assembling the '.asm' code into '.obj'."
-    	echo
+   	echo
 	echo "  --clean       	Removes '.obj' files from the current directory."
-    	echo "  --clean -r    	Recursively removes '.obj' files from the current directory and its subdirectories."
+   	echo "  --clean -r    	Recursively removes '.obj' files from the current directory and its subdirectories."
 }
 
 # Initialize variables
@@ -29,7 +29,7 @@ while [[ "$#" -gt 0 ]]; do
             printHelp
             exit 0
             ;;
-	-c | --compile)
+		-c | --compile)
             shift
             if [[ "${1##*.}" != "asm" ]]; then
                 echo "Error: The file provided with -c must be an '.asm' file." >&2
@@ -39,7 +39,7 @@ while [[ "$#" -gt 0 ]]; do
             lc3as "$1"
             asm_file="$1"
             ;;
-	-r | --run)
+		-r | --run)
             run_simulator=true
             run_file="$2"
             shift
