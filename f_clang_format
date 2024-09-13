@@ -1,0 +1,70 @@
+#!/bin/bash
+
+# Function to display usage instructions
+usage() {
+    echo "Usage: $0 -d <directory> -f <clang-format-file> [-r]"
+    exit 1
+}
+
+# Check if the correct number of arguments is passed
+if [ $# -lt 4 ]; then
+    usage
+fi
+
+# Initialize variables
+RECURSIVE=false
+DIRECTORY=""
+CLANG_FORMAT_FILE=""
+
+# Parse arguments
+while getopts "d:f:r" opt; do
+    case $opt in
+        d)
+            DIRECTORY=$OPTARG
+            ;;
+        f)
+            CLANG_FORMAT_FILE=$OPTARG
+            ;;
+        r)
+            RECURSIVE=true
+            ;;
+        *)
+            usage
+            ;;
+    esac
+done
+
+# Check if directory and clang-format file are provided
+if [ -z "$DIRECTORY" ] || [ -z "$CLANG_FORMAT_FILE" ]; then
+    usage
+fi
+
+# Check if the directory exists
+if [ ! -d "$DIRECTORY" ]; then
+    echo "Directory $DIRECTORY does not exist!"
+    exit 1
+fi
+
+# Check if the clang-format file exists
+if [ ! -f "$CLANG_FORMAT_FILE" ]; then
+    echo "Clang format file $CLANG_FORMAT_FILE does not exist!"
+    exit 1
+fi
+
+# Function to format files in the directory
+format_files() {
+    local DIR=$1
+    echo "Formatting files in $DIR"
+
+    # Find and format files
+    find "$DIR" -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.c" -o -name "*.h" \) -exec clang-format -style=file -i --fallback-style=none {} +
+}
+
+# Perform formatting based on recursive option
+if $RECURSIVE; then
+    format_files "$DIRECTORY"
+else
+    find "$DIRECTORY" -maxdepth 1 -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.c" -o -name "*.h" \) -exec clang-format -style=file -i --fallback-style=none {} +
+fi
+
+echo "Formatting complete."
