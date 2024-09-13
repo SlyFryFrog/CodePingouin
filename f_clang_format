@@ -7,7 +7,7 @@ usage() {
 }
 
 # Check if the correct number of arguments is passed
-if [ $# -lt 4 ]; then
+if [ $# -lt 1 ]; then
     usage
 fi
 
@@ -34,8 +34,8 @@ while getopts "d:f:r" opt; do
     esac
 done
 
-# Check if directory and clang-format file are provided
-if [ -z "$DIRECTORY" ] || [ -z "$CLANG_FORMAT_FILE" ]; then
+# Check if directory is provided
+if [ -z "$DIRECTORY" ]; then
     usage
 fi
 
@@ -46,9 +46,19 @@ if [ ! -d "$DIRECTORY" ]; then
 fi
 
 # Check if the clang-format file exists
-if [ ! -f "$CLANG_FORMAT_FILE" ]; then
-    echo "Clang format file $CLANG_FORMAT_FILE does not exist!"
-    exit 1
+if  [ -z "$CLANG_FORMAT_FILE" ]; then
+	echo "Defaulting to root .clang-format file."
+	CLANG_FORMAT_PATH="$HOME/.clang-format"
+	
+	if [ ! -f "$HOME/.clang-format" ]; then
+		echo "Clang format file $CLANG_FORMAT_FILE does not exist!"
+		exit 1
+	fi
+else
+	if [ ! -f "$CLANG_FORMAT_FILE" ]; then
+		echo "Clang format file $CLANG_FORMAT_FILE does not exist!"
+		exit 1
+	fi
 fi
 
 # Function to format files in the directory
