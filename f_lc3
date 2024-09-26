@@ -1,18 +1,18 @@
 #!/bin/bash
 
-function printHelp() {
-    	echo "Usage: $0 [-h | --help] [-c | --compile file] [-r | --run [file]] [--clean [-r]]"
-    	echo
+function usage() {
+    echo "Usage: $0 [-h | --help] [-c | --compile file] [-r | --run [file]] [--clean [-r]]"
+    echo
    	echo "Options: "
-    	echo "  -h and --help"
+    echo "  -h and --help"
 	echo "Prints the help message."
-    	echo "  -c [file] and --compile [file]"
+    echo "  -c [file] and --compile [file]"
 	echo "Assembles '.asm' code into '.obj' for the lc3 simulator."
-    	echo "  -r [file] and --run [file]"
+    echo "  -r [file] and --run [file]"
 	echo "Runs the simulator after assembling the '.asm' code into '.obj'."
-    	echo
+    echo
 	echo "  --clean       	Removes '.obj' files from the current directory."
-    	echo "  --clean -r    	Recursively removes '.obj' files from the current directory and its subdirectories."
+    echo "  --clean -r    	Recursively removes '.obj' files from the current directory and its subdirectories."
 }
 
 # Initialize variables
@@ -26,20 +26,20 @@ clean_recursive=false
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         -h | --help)
-            printHelp
+            usage
             exit 0
             ;;
-	-c | --compile)
+	    -c | --compile)
             shift
             if [[ "${1##*.}" != "asm" ]]; then
                 echo "Error: The file provided with -c must be an '.asm' file." >&2
-                printHelp
+                usage
                 exit 1
             fi
             lc3as "$1"
             asm_file="$1"
             ;;
-	-r | --run)
+	    -r | --run)
             run_simulator=true
             run_file="$2"
             shift
@@ -53,7 +53,7 @@ while [[ "$#" -gt 0 ]]; do
             ;;
         *)
             echo "Unknown option: $1" >&2
-            printHelp
+            usage
             exit 1
             ;;
     esac
@@ -64,11 +64,11 @@ done
 if $clean; then
     if $clean_recursive; then
         find . -name "*.obj" -type f -delete
-	find . -name "*.sym" -type f -delete
+	    find . -name "*.sym" -type f -delete
         echo "Recursively removed all '.obj' and '.sym' files from the current directory and its subdirectories."
     else
         find . -maxdepth 1 -name "*.obj" -type f -delete
-	find . -maxdepth 1 -name "*.sym" -type f -delete
+	    find . -maxdepth 1 -name "*.sym" -type f -delete
         echo "Removed all '.obj' and '.sym' files from the current directory."
     fi
     exit 0
@@ -79,7 +79,7 @@ if $run_simulator; then
     if [[ -n "$run_file" ]]; then
         if [[ "${run_file##*.}" != "obj" ]]; then
             echo "Error: The file provided with -r must be an '.obj' file." >&2
-            printHelp
+            usage
             exit 1
         fi
         lc3sim "$run_file"
@@ -87,7 +87,7 @@ if $run_simulator; then
         lc3sim "${asm_file%%.*}.obj"
     else
         echo "Error: No .asm file was provided to compile and run." >&2
-        printHelp
+        usage
         exit 1
     fi
 fi

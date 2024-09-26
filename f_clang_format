@@ -17,8 +17,12 @@ DIRECTORY=""
 CLANG_FORMAT_FILE=""
 
 # Parse arguments
-while getopts "d:f:r" opt; do
+while getopts "h:d:f:r" opt; do
     case $opt in
+        h)
+            usage
+            exit 0
+            ;;
         d)
             DIRECTORY=$OPTARG
             ;;
@@ -28,8 +32,9 @@ while getopts "d:f:r" opt; do
         r)
             RECURSIVE=true
             ;;
-        *)
+		\?) # Case for invalid arg
             usage
+            exit 1
             ;;
     esac
 done

@@ -1,5 +1,38 @@
 #!/bin/bash
 
+function usage() {
+    echo "Usage: $0 [-h | --help] [-s | --sudo-add-aliases]"
+    echo
+   	echo "Options: "
+    echo "  -h and --help"
+    echo "  -s and --sudo-add-aliases"
+}
+
+
+while getopts "h" opt; do
+    case $1 in
+        -h | --help)
+            DIRECTORY=$OPTARG
+            exit 0
+            ;;
+        -s | --sudo-add-aliases)
+            if [[ ! "$(id -u)" -eq 0 ]]; then
+                echo "This flag requires that the script be run as root."
+                echo
+                usage
+                exit 0
+            fi
+
+            # Arg to add aliases as root
+            SUDO=true
+            ;;
+		\?) # Case for invalid arg
+            usage
+            exit 1
+            ;;
+    esac
+done
+
 # File to update aliases
 ALIASES_FILE="$HOME/.bash_aliases"
 ALIASES_BAK_FILE="${ALIASES_FILE}.bak"

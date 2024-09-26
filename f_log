@@ -6,7 +6,7 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-function printHelp() {
+function usage() {
     echo "Usage: $0 [-h] [-d directory]"
     echo
     echo "Options:"
@@ -42,7 +42,7 @@ dir=""
 while getopts ":h:d::" opt; do
 	case $opt in
 		h) # Help arg
-			printHelp
+			usage
 			exit 0
 			;;
 		d)
@@ -50,11 +50,11 @@ while getopts ":h:d::" opt; do
 			;;
 		:) # Case for mismatched arg
             echo "Option -$OPTARG requires an argument." >&2
-            printHelp
+            usage
             exit 1
             ;;
 		\?) # Case for invalid arg
-			printHelp
+			usage
 			exit 1
 			;;
 	esac
@@ -63,7 +63,7 @@ done
 # Ensure dir is set
 if [ -z "$dir" ]; then
     echo "Directory not specified. Use the -d option to specify the directory."
-    printHelp
+    usage
     exit 1
 fi
 

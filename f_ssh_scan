@@ -1,0 +1,128 @@
+#!/bin/bash
+
+function usage() {
+    echo "Usage: $0 [OPTIONS]"
+    echo
+    echo "Options:"
+    echo "  -h, --help                          Show this help message and exit"
+    echo "  -a, --append-to-config [HOST_NAME]  Append first successful connection to SSH config"
+    echo "  -k, --key [KEY]                     Identity key used for ssh authentication"
+    echo "  -p, --port [PORT]                   Specify an SSH port (default is 22)"
+    echo "  -r, --revert                        Revert SSH config to the backup version"
+    echo "  -s, --scan                          Scan the 192.168.1.1/24 subnet for available hosts"
+    echo "  -u, --user                          Username used for ssh connection"
+    echo
+}
+
+# Default values
+SSH_KEY=""
+USER=""
+SUBNET="192.168.1"
+HOST_NAME=""
+CONFIG_FILE="$HOME/.ssh/config"
+PORT=22
+APPEND_TO_CONFIG=0
+
+# Parse options
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        -h | --help)
+            usage
+            exit 0
+            ;;
+        -a | --append)
+            HOST_NAME="$2"
+            APPEND_TO_CONFIG=1
+            ;;
+        -k | --key)
+            SSH_KEY="$2"
+            ;;
+        -p | --port)
+            PORT="$2"
+            ;;
+        -r | --revert)
+            if [[ -f "$CONFIG_FILE.bak" ]]; then
+                cp "$CONFIG_FILE.bak" "$CONFIG_FILE"
+                echo "Config reverted to backup."
+            else
+                echo "Backup config not found!"
+            fi
+            exit 0
+            ;;
+        -s | --scan)
+            SCAN=1
+            ;;
+        -u | --user)
+            USER="$2"
+            ;;
+        \?)
+            echo "Unknown option: $1" >&2
+            usage
+            exit 1
+            ;;
+    esac
+    shift
+done
+
+# Check that necessary arguments are provided if required options are used
+if [[ -z "$USER" ]]; then
+    echo "Error: Username must be provided."
+    usage
+    exit 1
+fi
+
+# Backup the SSH config if needed for appending
+if [[ "$APPEND_TO_CONFIG" -eq 1 ]]; then
+    cp "$CONFIG_FILE" "$CONFIG_FILE.bak"
+fi
+
+function append_to_ssh_config() {
+    # Check if the config already contains the Host entry
+    if grep -q "^Host $HOST_NAME" "$CONFIG_FILE"; then
+        echo "Host $HOST_NAME already exists in $CONFIG_FILE. Skipping append."
+        exit 1
+    fi
+
+    echo "Host $HOST_NAME" >> "$CONFIG_FILE"
+    echo "  HostName $1" >> "$CONFIG_FILE"
+    echo "  User $USER" >> "$CONFIG_FILE"
+    
+    if [[ -z SSH_KEY ]]; then
+        echo "  IdentityFile $SSH_KEY" >> "$CONFIG_FILE"
+    fi
+    
+    echo "  Port $PORT" >> "$CONFIG_FILE"
+    echo "Added $1 to SSH config under host $HOST_NAME."
+}
+
+function scan_subnet() {
+    for i in {1..254}; do
+        IP="$SUBNET.$i"
+        
+        # Attempt to SSH into the current IP
+        echo "Trying to connect to $IP on port $PORT..."
+
+        if [[ -z SSH_KEY ]]; then
+            ssh "$USER@$IP" -o BatchMode=yes -o ConnectTimeout=5 -p "$PORT" 'exit' 2>/dev/null    
+        else
+            ssh -i "$SSH_KEY" "$USER@$IP" -o BatchMode=yes -o ConnectTimeout=5 -p "$PORT" 'exit' 2>/dev/null
+        fi
+
+        # Check if the SSH command was successful
+        if [ $? -eq 0 ]; then
+            echo "Successfully connected to $IP"
+
+            if [[ $APPEND_TO_CONFIG -eq 1 ]]; then
+                append_to_ssh_config "$IP"
+                exit 0
+            fi
+        else
+            echo "Connection to $IP failed"
+        fi
+    done
+}
+
+# Run scan if the scan option is provided
+if [[ "$SCAN" -eq 1 ]]; then
+    scan_subnet
+fi

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-function printHelp() {
+function usage() {
 	echo "Usage: $0 [-h] [-d] [-s] [-i]"
 	echo "  -h    Display help"
 	echo "  -d    Remove the ~/.vcpkg directory"
@@ -14,7 +14,7 @@ function installDependencies() {
 	if [ ! "$(id -u)" -eq 0 ]; then
 		echo "This flag requires that the script be run as root."
 		echo
-		printHelp
+		usage
 		exit 0
 	fi
 
@@ -68,7 +68,7 @@ function setup() {
 while getopts ":hdsi" opt; do
 	case $opt in
 		h) # Help arg
-			printHelp
+			usage
 			exit 0
 			;;
 	  	i)
@@ -93,11 +93,11 @@ while getopts ":hdsi" opt; do
 			;;
 		:) # Case for mismatched arg
 			echo "Option -$OPTARG requires an argument." >&2
-			printHelp
+			usage
 			exit 1
 			;;
 		\?) # Case for invalid arg
-			printHelp
+			usage
 			exit 1
 			;;
 	esac
