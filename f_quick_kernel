@@ -1,6 +1,10 @@
 #!/bin/bash
 
+<<<<<<< HEAD
 function usage() {
+=======
+function printHelp() {
+>>>>>>> 2b3c012fab5f2c201639f9a7345a1f85a16dad16
     echo "Usage: $0 [-h] [-i file] [-r file]"
 	echo
 	echo "Options: "
