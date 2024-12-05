@@ -1,6 +1,5 @@
 #!/bin/bash
 
-<<<<<<< HEAD
 function usage() {
     echo "Usage: $0 [-h | --help] [-c | --compile file] [-r | --run [file]] [--clean [-r]]"
     echo
@@ -14,21 +13,6 @@ function usage() {
     echo
 	echo "  --clean       	Removes '.obj' files from the current directory."
     echo "  --clean -r    	Recursively removes '.obj' files from the current directory and its subdirectories."
-=======
-function printHelp() {
-    echo "Usage: $0 [-h | --help] [-c | --compile file] [-r | --run [file]] [--clean [-r]]"
-    echo
-   	echo "Options: "
-   	echo "  -h and --help"
-	echo "Prints the help message."
-   	echo "  -c [file] and --compile [file]"
-	echo "Assembles '.asm' code into '.obj' for the lc3 simulator."
-   	echo "  -r [file] and --run [file]"
-	echo "Runs the simulator after assembling the '.asm' code into '.obj'."
-   	echo
-	echo "  --clean       	Removes '.obj' files from the current directory."
-   	echo "  --clean -r    	Recursively removes '.obj' files from the current directory and its subdirectories."
->>>>>>> 2b3c012fab5f2c201639f9a7345a1f85a16dad16
 }
 
 # Initialize variables
@@ -45,11 +29,7 @@ while [[ "$#" -gt 0 ]]; do
             usage
             exit 0
             ;;
-<<<<<<< HEAD
-	    -c | --compile)
-=======
 		-c | --compile)
->>>>>>> 2b3c012fab5f2c201639f9a7345a1f85a16dad16
             shift
             if [[ "${1##*.}" != "asm" ]]; then
                 echo "Error: The file provided with -c must be an '.asm' file." >&2
@@ -59,23 +39,41 @@ while [[ "$#" -gt 0 ]]; do
             lc3as "$1"
             asm_file="$1"
             ;;
-<<<<<<< HEAD
-	    -r | --run)
-=======
 		-r | --run)
->>>>>>> 2b3c012fab5f2c201639f9a7345a1f85a16dad16
             run_simulator=true
             run_file="$2"
             shift
             ;;
-        --clean)
+		--clean)
             clean=true
             if [[ "$2" == "-r" ]]; then
                 clean_recursive=true
                 shift
             fi
             ;;
-        *)
+		--install)
+			if [[ ! "$(id -u)" -eq 0 ]]; then
+				echo "This flag requires that the script be run as root."
+				echo
+				usage
+				exit 0
+			fi
+
+			cd /opt || exit 1
+
+			sudo apt install unzip
+
+			sudo wget https://highered.mheducation.com/sites/dl/free/0072467509/104652/lc3tools_v12.zip
+			unzip lc3tools_v12.zip
+			sudo rm lc3tools_v12.zip
+
+			sudo apt install wish
+			cd /opt/lc3tools || exit 1
+			sudo ./configure --installdir /usr/bin			
+			sudo make install
+			exit 0
+			;;
+		*)
             echo "Unknown option: $1" >&2
             usage
             exit 1
