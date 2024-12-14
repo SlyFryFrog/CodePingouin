@@ -54,7 +54,7 @@ fi
 if  [ -z "$CLANG_FORMAT_FILE" ]; then
 	echo "Defaulting to root .clang-format file."
 	CLANG_FORMAT_PATH="$HOME/.clang-format"
-	
+
 	if [ ! -f "$HOME/.clang-format" ]; then
 		echo "Clang format file $CLANG_FORMAT_FILE does not exist!"
 		exit 1
@@ -72,14 +72,14 @@ format_files() {
     echo "Formatting files in $DIR"
 
     # Find and format files
-    find "$DIR" -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.c" -o -name "*.h" \) -exec clang-format -style=file -i --fallback-style=none {} +
+    find "$DIR" -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.c" -o -name "*.h" -o -name "*.java" \) -exec clang-format -style=file -i --fallback-style=none {} +
 }
 
 # Perform formatting based on recursive option
 if $RECURSIVE; then
     format_files "$DIRECTORY"
 else
-    find "$DIRECTORY" -maxdepth 1 -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.c" -o -name "*.h" \) -exec clang-format -style=file -i --fallback-style=none {} +
+    find "$DIRECTORY" -maxdepth 1 -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.c" -o -name "*.h"  -o -name "*.java" \) -exec clang-format -style=file -i --fallback-style=none {} +
 fi
 
 echo "Formatting complete."
